@@ -1,73 +1,79 @@
-# Practical-1
-# Perceptron Simulation using NumPy — Explanation
+# Practical 1: Simulate a Perceptron using NumPy
 
-This notebook implements a single-layer perceptron — the simplest kind of artificial neuron — and trains it to learn the AND logic gate. Here's what's happening step by step:
+## Aim
+To implement a single-layer Perceptron from scratch using NumPy and use it to classify PTAL (Public Transport Accessibility Level) as **Good** or **Poor**, based on walk time to nearest stop and service frequency.
 
-## 1. The Step Activation Function
+## Theory
 
-```python
+**Perceptron** is the simplest form of an artificial neural network, introduced by Frank Rosenblatt (1958). It models a single biological neuron and is used for **binary linear classification** — separating data into two classes using a straight line (or hyperplane in higher dimensions).
+
+**Structure:**
+- Inputs: $x_1, x_2, ..., x_n$ (features)
+- Weights: $w_1, w_2, ..., w_n$ (importance of each feature)
+- Bias: $b$ (shifts the decision boundary)
+- Weighted sum: $z = \sum_{i=1}^{n} w_i x_i + b$
+- Activation (step function): $\hat{y} = 1 \text{ if } z \geq 0, \text{ else } 0$
+
+**Learning rule (Perceptron Learning Algorithm):**
+For each training sample, weights are updated only when the prediction is wrong:
+$$w_i \leftarrow w_i + \eta (y - \hat{y}) x_i$$
+$$b \leftarrow b + \eta (y - \hat{y})$$
+where $\eta$ is the learning rate, $y$ is the true label, and $\hat{y}$ is the predicted label. This is repeated over multiple epochs until the weights converge (error becomes 0 for all samples), guaranteed only if the data is **linearly separable**.
+
+**Applied context — PTAL accessibility:**
+PTAL scores an area's public transport access using walk time to stops and service frequency. Here the perceptron takes two normalized features — `walk_time` and `service_freq` — and learns a linear boundary separating **Good access** (short walk, high frequency) from **Poor access** (long walk, low frequency), mimicking how a simplified accessibility classifier would work.
+
+**Limitation:** A single perceptron can only learn linearly separable functions (e.g., AND, OR) — it cannot learn XOR or other non-linearly separable patterns, which is why multi-layer networks (MLPs) were later developed.
+
+# 1. Simulate a Perceptron using NumPy
+# Domain: PTAL (Public Transport Accessibility Level) classification
+# Given [avg_walk_time_to_stop_min, weighted_service_freq_per_hr], predict
+# whether a location has Good (1) or Poor (0) transit accessibility.
+import numpy as np
+
+# Step activation function
 def step_function(x):
     return 1 if x >= 0 else 0
-```
 
-This is the perceptron's "decision maker." Once the neuron computes a weighted sum of inputs, this function converts that number into a binary output: fire (1) if the sum is ≥ 0, stay silent (0) otherwise. This mimics a biological neuron's all-or-nothing firing behavior.
+# Perceptron class
+class Perceptron:
+    def __init__(self, input_size, learning_rate=0.1):
+        self.weights = np.zeros(input_size)
+        self.bias = 0
+        self.lr = learning_rate
 
-## 2. The Perceptron Class
+    def predict(self, x):
+        z = np.dot(x, self.weights) + self.bias
+        return step_function(z)
 
-**Initialization (`__init__`)**
-- `weights = np.zeros(input_size)` — starts with zero weight for each input (here, 2 inputs)
-- `bias = 0` — starts at zero too
-- `lr = 0.1` — the learning rate, controlling how big a step the weights take with each correction
+    def train(self, X, y, epochs=10):
+        for epoch in range(epochs):
+            for xi, target in zip(X, y):
+                prediction = self.predict(xi)
+                error = target - prediction
+                self.weights += self.lr * error * xi
+                self.bias += self.lr * error
 
-**Prediction (`predict`)**
+# Training data: [walk_time_min (normalized), service_freq_per_hr (normalized)]
+# Label 1 = Good PTAL accessibility, 0 = Poor accessibility
+# Rule of thumb: short walk time AND high frequency -> good access
+X = np.array([
+    [0.1, 0.9],   # 2 min walk, high freq -> good
+    [0.2, 0.8],   # short walk, high freq -> good
+    [0.9, 0.1],   # long walk, low freq -> poor
+    [0.8, 0.2],   # long walk, low freq -> poor
+    [0.15, 0.85], # good
+    [0.85, 0.15]  # poor
+])
+y = np.array([1, 1, 0, 0, 1, 0])
 
-```python
-z = np.dot(x, self.weights) + self.bias
-return step_function(z)
-```
+# Train the perceptron
+p = Perceptron(input_size=2)
+p.train(X, y, epochs=10)
 
-This computes `z = w1*x1 + w2*x2 + bias`, then passes it through the step function to get 0 or 1.
-
-**Training (`train`)** — this is the heart of the perceptron learning rule:
-
-```python
-prediction = self.predict(xi)
-error = target - prediction
-self.weights += self.lr * error * xi
-self.bias += self.lr * error
-```
-
-For every training example, the perceptron:
-
-1. Makes a prediction
-2. Computes the error (target − prediction)
-3. Nudges the weights and bias in the direction that reduces that error
-
-If the prediction is correct, `error = 0`, so nothing changes. If wrong, the weights shift proportionally to the learning rate and the input values. This process repeats for every sample, across `epochs = 10` full passes through the data — giving the perceptron multiple chances to converge on the correct weights.
-
-## 3. The Training Data — AND Gate
-
-```python
-X = np.array([[0,0],[0,1],[1,0],[1,1]])
-y = np.array([0,0,0,1])
-```
-
-This is the truth table for logical AND: the output is only 1 when both inputs are 1. The perceptron's job is to find a weight/bias combination that draws a straight line (a linear decision boundary) separating the single "1" case from the three "0" cases — which is possible here because AND is a linearly separable function (this matters because perceptrons cannot learn non-linearly-separable functions like XOR).
-
-## 4. The Output
-
-```
-Predictions:
-Input: [0 0], Output: 0
-Input: [0 1], Output: 0
-Input: [1 0], Output: 0
-Input: [1 1], Output: 1
-```
-
-After 10 epochs of training, the perceptron predicts correctly for all four input combinations — it has successfully learned the AND gate. This confirms:
-
-- The weights/bias converged to values where `w1*x1 + w2*x2 + bias ≥ 0` only when both inputs are 1
-- The perceptron learning rule works as expected on a linearly separable problem
-- 10 epochs was enough for convergence (AND typically converges in just a few epochs given how simple it is)
-
-Bigger picture: this is essentially the "hello world" of neural networks — it demonstrates the foundational building block (weighted sum + threshold + error-driven weight update) that more complex architectures like multi-layer perceptrons and deep networks are built on top of.
+# Test predictions
+labels = {1: 'Good Access', 0: 'Poor Access'}
+print("PTAL Accessibility Predictions:")
+for xi in X:
+    pred = p.predict(xi)
+    print(f"Input (walk={xi[0]:.2f}, freq={xi[1]:.2f}) -> {labels[pred]}")
