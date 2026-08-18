@@ -1,9 +1,9 @@
 # Practical 1: Simulate a Perceptron using NumPy
 
-## Aim
+# Aim
 To implement a single-layer Perceptron from scratch using NumPy and use it to classify PTAL (Public Transport Accessibility Level) as **Good** or **Poor**, based on walk time to nearest stop and service frequency.
 
-## Theory
+ Theory
 
 **Perceptron** is the simplest form of an artificial neural network, introduced by Frank Rosenblatt (1958). It models a single biological neuron and is used for **binary linear classification** — separating data into two classes using a straight line (or hyperplane in higher dimensions).
 
@@ -25,17 +25,17 @@ PTAL scores an area's public transport access using walk time to stops and servi
 
 **Limitation:** A single perceptron can only learn linearly separable functions (e.g., AND, OR) — it cannot learn XOR or other non-linearly separable patterns, which is why multi-layer networks (MLPs) were later developed.
 
-# 1. Simulate a Perceptron using NumPy
-# Domain: PTAL (Public Transport Accessibility Level) classification
-# Given [avg_walk_time_to_stop_min, weighted_service_freq_per_hr], predict
-# whether a location has Good (1) or Poor (0) transit accessibility.
+ 1. Simulate a Perceptron using NumPy
+ Domain: PTAL (Public Transport Accessibility Level) classification
+ Given [avg_walk_time_to_stop_min, weighted_service_freq_per_hr], predict
+ whether a location has Good (1) or Poor (0) transit accessibility.
 import numpy as np
 
-# Step activation function
+ Step activation function
 def step_function(x):
     return 1 if x >= 0 else 0
 
-# Perceptron class
+ Perceptron class
 class Perceptron:
     def __init__(self, input_size, learning_rate=0.1):
         self.weights = np.zeros(input_size)
@@ -54,9 +54,9 @@ class Perceptron:
                 self.weights += self.lr * error * xi
                 self.bias += self.lr * error
 
-# Training data: [walk_time_min (normalized), service_freq_per_hr (normalized)]
-# Label 1 = Good PTAL accessibility, 0 = Poor accessibility
-# Rule of thumb: short walk time AND high frequency -> good access
+ Training data: [walk_time_min (normalized), service_freq_per_hr (normalized)]
+ Label 1 = Good PTAL accessibility, 0 = Poor accessibility
+ Rule of thumb: short walk time AND high frequency -> good access
 X = np.array([
     [0.1, 0.9],   # 2 min walk, high freq -> good
     [0.2, 0.8],   # short walk, high freq -> good
@@ -67,11 +67,11 @@ X = np.array([
 ])
 y = np.array([1, 1, 0, 0, 1, 0])
 
-# Train the perceptron
+ Train the perceptron
 p = Perceptron(input_size=2)
 p.train(X, y, epochs=10)
 
-# Test predictions
+ Test predictions
 labels = {1: 'Good Access', 0: 'Poor Access'}
 print("PTAL Accessibility Predictions:")
 for xi in X:
